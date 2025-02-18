@@ -143,6 +143,7 @@ export const GameScreen: React.FC = () => {
   const [gameEntities, setGameEntities] = useState({
     // Initialize your game entities here
   });
+  const [isSoundLoading, setIsSoundLoading] = useState(true);
 
   useEffect(() => {
     // Initialize superhero
@@ -162,26 +163,26 @@ export const GameScreen: React.FC = () => {
 
     // Load and play background music
     const initSound = async () => {
+      setIsSoundLoading(true);
       try {
+        // Load background music first
         await soundManager.current.loadBackgroundMusic(sounds.bgm.main);
-        soundManager.current.playBackgroundMusic(0.3);
-
-        // Load sound effects
-        await Promise.all([
-          soundManager.current.loadSound('jump', sounds.sfx.jump),
-          soundManager.current.loadSound('land', sounds.sfx.land),
-          soundManager.current.loadSound('punch', sounds.sfx.punch),
-          soundManager.current.loadSound('dash', sounds.sfx.dash),
-          soundManager.current.loadSound('damage', sounds.sfx.damage),
-          soundManager.current.loadSound('energyBlast', sounds.sfx.energyBlast),
-          soundManager.current.loadSound('superPunch', sounds.sfx.superPunch),
-          soundManager.current.loadSound('enemyHit', sounds.sfx.enemyHit),
-          soundManager.current.loadSound('enemyDeath', sounds.sfx.enemyDeath),
-          soundManager.current.loadSound('enemySpawn', sounds.sfx.enemySpawn),
-          soundManager.current.loadSound('levelUp', sounds.sfx.levelUp)
-        ]);
+        
+        // Load all sound effects in parallel
+        const soundEffects = Object.entries(sounds.sfx).map(([name, path]) => 
+          soundManager.current.loadSound(name, path)
+        );
+        
+        await Promise.all(soundEffects);
+        
+        // Start background music if everything loaded successfully
+        if (!soundManager.current.isLoading()) {
+          soundManager.current.playBackgroundMusic(0.3);
+        }
       } catch (error) {
         console.error('Failed to initialize sound:', error);
+      } finally {
+        setIsSoundLoading(false);
       }
     };
 
